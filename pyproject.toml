@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cloud-radar-ml-project"
+version = "0.1.0"
+description = "Cloud radar processing utilities for machine learning data preparation"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "matplotlib>=3.8",
+    "netCDF4>=1.6",
+    "numpy>=1.26",
+    "pandas>=2.2",
+    "progress>=1.6",
+    "xarray>=2024.1.0",
+]
+
+[project.scripts]
+cloud-radar-create-sample = "process.create_sample:main"
+
+[tool.setuptools]
+include-package-data = false
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["figures", "figures.*", "process", "process.*", "readers", "readers.*", "utils", "utils.*"]
