@@ -51,6 +51,7 @@ def main():
     range_gate = 10
     save_path = os.path.join(cr_savefig_path, "doppler_spectra_sample.png")
     plotting = True
+    site = "lampedusa"
 
     os.makedirs(cr_savefig_path, exist_ok=True)
     os.makedirs(os.path.join(cr_savefig_path, "samples"), exist_ok=True)
@@ -116,6 +117,7 @@ def main():
 
 
     # store data in an ncdf file for further use
+
     ds_spec = xr.Dataset(
         data_vars={
             "spec_data": (("times", "doppler"), spec_data),
@@ -127,8 +129,9 @@ def main():
             "ranges": ranges
         }
     )   
-    ds_spec.to_netcdf(os.path.join(cr_savefig_path, "spec_data.nc"))
-    print(f"Saved extracted spectra data to {os.path.join(cr_savefig_path, 'spec_data.nc')}")
+    ds_spec.to_netcdf(os.path.join(cr_savefig_path, site+".nc"))
+    print(f"Saved extracted spectra data to {os.path.join(cr_savefig_path, site+'_'+yy+mm+dd+'_'+hh+'.nc')}")
+
 
 
     # loop on all time and range indexes where Zg is not Nan and plot the doppler spectra for each of them

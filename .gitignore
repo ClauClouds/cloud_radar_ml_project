@@ -18,3 +18,4 @@ outputs/
 .env
 .idea/
 .vscode/settings.json
+readers/config.py
