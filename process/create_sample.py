@@ -22,7 +22,7 @@ from progress.bar import Bar
 from readers.cloud_radar_lampedusa import read_cloud_radar_data, read_and_store_log_vars
 from utils.data_info import cr_lampedusa_path, cr_lampedusa_filename, cr_savefig_path, log_lampedusa_path
 from figures.doppler_spectra import plot_single_sample, plot_distribution_spectra_values
-from utils.func import normalize_spec
+from utils.func import normalize_spec, extract_day_hour, construct_sample_string
 
 def extract_sample(ds):
     """
@@ -61,48 +61,27 @@ def main():
         )
 
     # extract day and hour from time stamp
-    yy = time_stamp.split(" ")[0].split("-")[0]
-    mm = time_stamp.split(" ")[0].split("-")[1]
-    dd = time_stamp.split(" ")[0].split("-")[2]
-    hh = time_stamp.split(" ")[1].split(":")[0]
-    MM = time_stamp.split(" ")[1].split(":")[1]
-    ss = time_stamp.split(" ")[1].split(":")[2]
-
+    yy, mm, dd, hh, MM, ss = extract_day_hour(time_stamp)
 
     # construct date string
     date = f"{yy}{mm}{dd}"
     print(f"Selected case: {date} date, {hh} hour")
 
-    # read the file
-    ds = read_cloud_radar_data(file_path)   
-
-    # Select the data for the given time stamp and range gate
-    doppler = ds['doppler'].values
-
-    # sorting all dataset variables according to doppler values, to have the doppler spectra ordered by doppler velocity
-    sorted_indices = np.argsort(doppler)
-    doppler = doppler[sorted_indices]
-    ds_sorted = ds.isel(doppler=sorted_indices)
-
-
-    # read and stor log var file if it does not exist
-    if not os.path.exists(log_lampedusa_path):
-        read_and_store_log_vars(ds)
-
-    # identify all time and range indexes where Zg is not Nan.
-    time_range_indices = np.where(~np.isnan(ds['Zg'].values))
+    # read the file and identify all time and range indexes where Zg is not Nan.
+    # it resamples to 10 seconds if resampling is on
+    ds, time_range_indices = read_cloud_radar_data(file_path, resampling=True)   
 
     if plotting:
 
         # plot time height plot of radar reflectivity for the day
-        Ze_time_height_day(ds, "20240105", cr_savefig_path)
+        Ze_time_height_day(ds, date, cr_savefig_path)
 
         # plot the mask of time and range indexes where Zg is not Nan.
-        plot_mask_spectra_gates(ds, time_range_indices, "20240105", cr_savefig_path)
+        plot_mask_spectra_gates(ds, time_range_indices, date, cr_savefig_path)
 
 
     # read doppler vel for firther plotting
-    v_doppler = ds_sorted['doppler'].values
+    v_doppler = ds['doppler'].values
 
     # loop on time range indices and extract the doppler spectra for each of them, storing it in spec_data array
     total_samples = len(time_range_indices[0])
@@ -116,7 +95,7 @@ def main():
     for time_idx, range_idx in zip(*time_range_indices):
 
         # select ds for the given time and range index
-        ds_sel = ds_sorted.isel(time=time_idx, range=range_idx)
+        ds_sel = ds.isel(time=time_idx, range=range_idx)
 
         # store time and range values for the current index
         times[ind] = ds_sel['time'].values
@@ -144,7 +123,7 @@ def main():
         },
         coords={
             "times": times,
-            "doppler": ds_sorted['doppler'].values,
+            "doppler": ds['doppler'].values,
             "ranges": ranges
         }
     )   
@@ -156,19 +135,13 @@ def main():
     for ind, (time_idx, range_idx) in enumerate(zip(*time_range_indices)):
 
         # read time stamp and range gate value for current index
-        time_stamp = str(ds_sorted['time'].values[time_idx])
-        range_gate = ds_sorted['range'].values[range_idx]
+        time_stamp = str(ds['time'].values[time_idx])
+        range_gate = ds['range'].values[range_idx]
+
         print(f"Plotting doppler spectra for time stamp {time_stamp} and range gate {range_gate} m")
 
         # approximate range gate to avoid decimals values
-        range_gate = int(range_gate)
-
-        # write time stamp as "yymmdd_hhmmss"
-        time_stamp = yy+mm+dd+'_'+hh+MM+ss
-
-        # build string 
-        str_sample = f"{date}_{time_stamp}_range_{range_gate}"
-        save_path = os.path.join(cr_savefig_path, "samples", f"{str_sample}.png")
+        save_path = construct_sample_string(time_stamp, range_gate, cr_savefig_path, date=date)
 
         # call plotting function to plot the doppler spectra for the current time stamp and range gate
         plot_single_sample(spec_data[ind, :], v_doppler, save_path)

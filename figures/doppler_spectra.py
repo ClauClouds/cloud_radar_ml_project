@@ -33,8 +33,8 @@ def plot_single_sample(spec, doppler, save_path=None):
     # find max value of spec to set y axis limit
     max_spec = np.nanmax(spec)
     ax.set_ylim(0, max_spec*1.1)
-    ax.set_xlim(doppler.min(), doppler.max())
-
+    #ax.set_xlim(doppler.min(), doppler.max())
+    ax.set_xlim(-4, 4)
     # make axis and labels invisible
     ax.axis('off')
 

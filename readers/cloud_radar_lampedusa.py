@@ -5,20 +5,21 @@ The data is read using xarray and returned as an xarray Dataset.
 """
 import pdb
 import pandas as pd
-
+import numpy as np
 from utils.data_info import cr_lampedusa_path
 import xarray as xr
 import os
 
 from utils.data_info import log_lampedusa_path
 
-def read_cloud_radar_data(file_path):
+def read_cloud_radar_data(file_path, resampling=False):
     """
     Reads the cloud radar data from a given file path and returns it as an xarray Dataset.
 
     Parameters:
     file_path (str): Path to the cloud radar file (NetCDF format).
-
+    resampling (bool): Whether to resample the data to 10 seconds intervals. Default is False.
+    
     Returns:
     xarray.Dataset: The cloud radar data as an xarray Dataset.
     """
@@ -26,10 +27,45 @@ def read_cloud_radar_data(file_path):
     # Read the cloud radar data using xarray
     ds = xr.open_dataset(file_path)
 
-    # convert time from seconds since since 01.01.1970 00:00 UTC to datetime format
-    ds["time"] = pd.to_datetime(ds["time"].values, unit="s")
+    # Convert integer epoch seconds to datetimes before any time-based operations.
+    if not np.issubdtype(ds["time"].dtype, np.datetime64):
+        ds["time"] = pd.to_datetime(ds["time"].values, unit="s")
 
-    return ds
+    if resampling:
+
+        # read the time resolution of the dataset from ds
+        time_res = ds['time'].diff('time').values[0]
+
+        # print time resolution in seconds
+        time_res_seconds = np.timedelta64(time_res, 's').astype(int)
+
+        print(f"Time resolution of the dataset: {time_res_seconds} seconds")
+
+        # if time res is below 10 seconds, resample the data to 10 seconds 
+        # to reduce the number of samples and make the processing faster, 
+        # by taking the mean of the values in each 10 seconds interval
+        if time_res_seconds < 10:
+            ds = ds.resample(time='10s').mean(skipna=True)
+            print(f"Resampled the dataset to 10 seconds resolution")
+            print("######################################################")
+
+    # Select the data for the given time stamp and range gate
+    doppler = ds['doppler'].values
+
+    # sorting all dataset variables according to doppler values, to have the doppler spectra ordered by doppler velocity
+    sorted_indices = np.argsort(doppler)
+    doppler = doppler[sorted_indices]
+    ds_sorted = ds.isel(doppler=sorted_indices)
+
+    # read and stor log var file if it does not exist
+    if not os.path.exists(log_lampedusa_path):
+        read_and_store_log_vars(ds_sorted)
+
+    # identify all time and range indexes where Zg is not Nan.
+    time_range_indices = np.where(~np.isnan(ds_sorted['Zg'].values))
+
+
+    return ds_sorted, time_range_indices
 
 
 def read_and_store_log_vars(ds):
