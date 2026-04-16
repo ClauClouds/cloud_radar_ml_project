@@ -2,6 +2,8 @@
 
 Python utilities for reading cloud radar observations, extracting Doppler spectra samples, and preparing data products for machine learning workflows.
 
+Python 3.9+ is supported.
+
 ## What this repository contains
 
 - `readers/`: dataset loading and metadata logging.
@@ -32,6 +34,12 @@ export CLOUD_RADAR_FILENAME="20240105_1400.znc"
 python -m process.create_sample
 ```
 
+or with the helper script:
+
+```bash
+./run_create_sample.sh
+```
+
 or, after installation:
 
 ```bash
@@ -51,6 +59,11 @@ Outputs are written to `CLOUD_RADAR_OUTPUT_DIR`, including:
 
 ## Notes
 
-- Absolute paths are not stored in the repository anymore; use environment variables instead.
+- The default paths in [utils/data_info.py](utils/data_info.py) are currently set for the local Lampedusa dataset on this machine.
+- Environment variables can still override those defaults when needed.
 - Raw data is ignored by git through `.gitignore`.
 - The project metadata is configured in `pyproject.toml`, so this folder is ready to initialize as a git repository and publish to GitHub.
+
+
+## command to run .sh 
+./run_create_sample.sh

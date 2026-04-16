@@ -2,6 +2,11 @@
 Code to generate cloud radar doppler spectra sample for deep learning processing
 The code reads a cloud radar file for a given time stamp and plots the doppler spectra for a given range gate
 
+how to run:
+cd /Users/claudia/Github/cloud_radar_project
+source /Users/claudia/Github/.env_base/bin/activate
+python -m process.create_sample
+
 """
 
 
