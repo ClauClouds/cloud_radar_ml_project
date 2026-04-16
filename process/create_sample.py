@@ -65,6 +65,9 @@ def main():
     mm = time_stamp.split(" ")[0].split("-")[1]
     dd = time_stamp.split(" ")[0].split("-")[2]
     hh = time_stamp.split(" ")[1].split(":")[0]
+    MM = time_stamp.split(" ")[1].split(":")[1]
+    ss = time_stamp.split(" ")[1].split(":")[2]
+
 
     # construct date string
     date = f"{yy}{mm}{dd}"
@@ -160,15 +163,15 @@ def main():
         # approximate range gate to avoid decimals values
         range_gate = int(range_gate)
 
-        # write time stamp as yymmdd_hhmmss
-        time_stamp = time_stamp.replace(" ", "_").replace(":", "").replace("-", "")[:-3]
+        # write time stamp as "yymmdd_hhmmss"
+        time_stamp = yy+mm+dd+'_'+hh+MM+ss
 
         # build string 
         str_sample = f"{date}_{time_stamp}_range_{range_gate}"
         save_path = os.path.join(cr_savefig_path, "samples", f"{str_sample}.png")
 
         # call plotting function to plot the doppler spectra for the current time stamp and range gate
-        plot_single_sample(spec_data_norm[ind, :], v_doppler, save_path)
+        plot_single_sample(spec_data[ind, :], v_doppler, save_path)
 
 
 if __name__ == "__main__":

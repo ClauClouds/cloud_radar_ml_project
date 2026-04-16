@@ -28,13 +28,19 @@ def plot_single_sample(spec, doppler, save_path=None):
     fig, ax = plt.subplots(figsize=(10, 6))
 
     # plot spectra minus noise
-    ax.plot(doppler,spec, color='blue')
+    ax.plot(doppler,spec, color='black')
 
-    # set y axis limit to 1 for normalized spectra data
-    ax.set_ylim(0, 1)
+    # find max value of spec to set y axis limit
+    max_spec = np.nanmax(spec)
+    ax.set_ylim(0, max_spec*1.1)
     ax.set_xlim(doppler.min(), doppler.max())
 
-    #ax.plot(ds['doppler'], np.repeat(noise.values, len(ds['doppler'])), label='Noise', color='red')
+    # make axis and labels invisible
+    ax.axis('off')
+
+    # be sure the only thing visible is the line plot of the spectra
+    ax.set_frame_on(False)
+
     # Save or display the plot
     if save_path:
         fig.savefig(save_path)
