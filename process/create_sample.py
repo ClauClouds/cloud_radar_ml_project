@@ -20,9 +20,10 @@ import os
 from progress.bar import Bar
 
 from readers.cloud_radar_lampedusa import read_cloud_radar_data, read_and_store_log_vars
-from utils.data_info import cr_lampedusa_path, cr_lampedusa_filename, cr_savefig_path, log_lampedusa_path
 from figures.doppler_spectra import plot_single_sample, plot_distribution_spectra_values
-from utils.func import normalize_spec, extract_day_hour, construct_sample_string
+from utils.func import normalize_spec, extract_day_hour, construct_sample_string, store_data_ncdf
+from config import *
+
 
 def extract_sample(ds):
     """
@@ -45,14 +46,21 @@ def extract_sample(ds):
 
 def main():
 
-    # Select time and range gate for the plot
-    file_path = os.path.join(cr_lampedusa_path, cr_lampedusa_filename)
-    time_stamp = "2024-01-05 14:00:00"
-    range_gate = 10
-    save_path = os.path.join(cr_savefig_path, "doppler_spectra_sample.png")
-    plotting = True
-    site = "lampedusa"
+    # Select time and range gate for the plot, local path where to save files, and site name for the plot title and file name
+    if site == "lampedusa":
+        file_path = os.path.join(cr_lampedusa_path, cr_lampedusa_filename)
+        save_path = os.path.join(cr_lampedusa_savefig_path, "doppler_spectra_sample.png")
+        time_stamp = cr_lampedusa_filename.split(".")[0]
+        cr_savefig_path = cr_lampedusa_savefig_path
+        log_path = log_lampedusa_path
+    elif site == "joyce":
+        file_path = os.path.join(cr_joyce_path, cr_joyce_filename)
+        save_path = os.path.join(cr_joyce_savefig_path, "doppler_spectra_sample.png")
+        time_stamp = cr_joyce_filename.split(".")[0]
+        cr_savefig_path = cr_joyce_savefig_path
+        log_path = log_joyce_path
 
+    # create output folder if it does not exist
     os.makedirs(cr_savefig_path, exist_ok=True)
     os.makedirs(os.path.join(cr_savefig_path, "samples"), exist_ok=True)
 
@@ -62,7 +70,10 @@ def main():
         )
 
     # extract day and hour from time stamp
-    yy, mm, dd, hh, MM, ss = extract_day_hour(time_stamp)
+    yy = time_stamp.split("_")[0][2:4]
+    mm = time_stamp.split("_")[0][4:6]
+    dd = time_stamp.split("_")[0][6:8]
+    hh = time_stamp.split("_")[1][0:2]
 
     # construct date string
     date = f"{yy}{mm}{dd}"
@@ -70,7 +81,7 @@ def main():
 
     # read the file and identify all time and range indexes where Zg is not Nan.
     # it resamples to 10 seconds if resampling is on
-    ds, time_range_indices = read_cloud_radar_data(file_path, resampling=True)   
+    ds, time_range_indices = read_cloud_radar_data(file_path, log_path=log_path, resampling=resampling)   
 
     if plotting:
 
@@ -115,24 +126,9 @@ def main():
     # normalize spec_data by its max value to have values between 0 and 1, to better visualize the distribution of the spectra values and set a threshold for plotting the samples
     spec_data_norm = normalize_spec(spec_data)
 
-
     # store data in an ncdf file for further use
-
-    ds_spec = xr.Dataset(
-        data_vars={
-            "spec_data": (("times", "doppler"), spec_data),
-            "spec_data_norm": (("times", "doppler"), spec_data_norm),
-        },
-        coords={
-            "times": times,
-            "doppler": ds['doppler'].values,
-            "ranges": ranges
-        }
-    )   
-    ds_spec.to_netcdf(os.path.join(cr_savefig_path, site+".nc"))
-    print(f"Saved extracted spectra data to {os.path.join(cr_savefig_path, site+'_'+yy+mm+dd+'_'+hh+'.nc')}")
-
-
+    ncdf_path = store_data_ncdf(spec_data, spec_data_norm, times, ranges, ds, site, date, hh, cr_savefig_path)
+    print(f"Saved extracted spectra data to {ncdf_path}")
 
     # loop on all time and range indexes where Zg is not Nan and plot the doppler spectra for each of them
     for ind, (time_idx, range_idx) in enumerate(zip(*time_range_indices)):
@@ -143,11 +139,11 @@ def main():
 
         print(f"Plotting doppler spectra for time stamp {time_stamp} and range gate {range_gate} m")
 
-        # approximate range gate to avoid decimals values
-        save_path = construct_sample_string(time_stamp, range_gate, cr_savefig_path, date=date)
+        # define sample file name and path to save the plot
+        save_path = construct_sample_string(time_stamp, range_gate, cr_savefig_path, site, date=date)
 
         # call plotting function to plot the doppler spectra for the current time stamp and range gate
-        plot_single_sample(spec_data[ind, :], v_doppler, save_path)
+        plot_single_sample(spec_data[ind, :], v_doppler, doppler_range, save_path)
 
 
 if __name__ == "__main__":

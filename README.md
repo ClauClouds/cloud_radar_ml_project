@@ -7,9 +7,10 @@ Python 3.9+ is supported.
 ## What this repository contains
 
 - `readers/`: dataset loading and metadata logging.
-- `process/`: sample extraction workflows.
+- `process/`: sample extraction workflows and code to upload on s3 data bucket once samples are created
 - `figures/`: plotting helpers for spectra and time-height diagnostics.
 - `utils/`: configuration and normalization utilities.
+-  config.py: configuration file to setup your run (to be edited for running what you want)
 
 ## Quick start
 
@@ -59,7 +60,7 @@ Outputs are written to `CLOUD_RADAR_OUTPUT_DIR`, including:
 
 ## Notes
 
-- The default paths in [utils/data_info.py](utils/data_info.py) are currently set for the local Lampedusa dataset on this machine.
+- The default paths in [config.py] are currently set for the local Lampedusa dataset on this machine.
 - Environment variables can still override those defaults when needed.
 - Raw data is ignored by git through `.gitignore`.
 - The project metadata is configured in `pyproject.toml`, so this folder is ready to initialize as a git repository and publish to GitHub.
@@ -67,3 +68,9 @@ Outputs are written to `CLOUD_RADAR_OUTPUT_DIR`, including:
 
 ## command to run .sh 
 ./run_create_sample.sh
+
+## for uploading on s3 bucket where to then run Deep learning model
+python3 -m process.upload_to_bucket.py
+
+## link where to find project info a dataset
+https://drive.google.com/drive/folders/1IyUB4aFUO9S4XaHOwwazp17tPlLD6aNp?usp=share_link

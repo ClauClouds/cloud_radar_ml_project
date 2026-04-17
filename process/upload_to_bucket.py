@@ -13,15 +13,14 @@ activate the venv and run the script with python3 -m process.upload_ch_ncdf_to_b
 import os
 from glob import glob
 from readers.data_buckets_funcs import init_s3, list_files_bucket, upload_to_bucket
-
 import pdb
+
 def main():
 
     # reading list of files from folder
     png_path = "/Users/claudia/Documents/Data/cloud_radar_Lampedusa/plots/samples/"
     # data bucket names
     bucket_name = "cloud-radar-ml-samples"
-    site = "lampedusa"
 
     # list all files in the folder (these are the files with 32 bits floating point data)  
     file_list = sorted(glob(os.path.join(png_path, "*.png")))
@@ -53,7 +52,7 @@ def main():
             filename = os.path.basename(file)
             
             # add prefix of site to the filename to avoid overwriting files with the same name from different sites
-            filename = site + "/" + filename
+            filename = filename
             print(f"moving file {filename} on bucket {bucket_name}")
             print("******************************************************")
             check = upload_to_bucket(file_path, filename, bucket_name)

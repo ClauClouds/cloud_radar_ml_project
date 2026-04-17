@@ -6,18 +6,17 @@ The data is read using xarray and returned as an xarray Dataset.
 import pdb
 import pandas as pd
 import numpy as np
-from utils.data_info import cr_lampedusa_path
 import xarray as xr
 import os
 
-from utils.data_info import log_lampedusa_path
 
-def read_cloud_radar_data(file_path, resampling=False):
+def read_cloud_radar_data(file_path, log_path, resampling=False):
     """
     Reads the cloud radar data from a given file path and returns it as an xarray Dataset.
 
     Parameters:
     file_path (str): Path to the cloud radar file (NetCDF format).
+    log_path (str): Path to the log file where dataset variables will be stored.
     resampling (bool): Whether to resample the data to 10 seconds intervals. Default is False.
     
     Returns:
@@ -58,8 +57,8 @@ def read_cloud_radar_data(file_path, resampling=False):
     ds_sorted = ds.isel(doppler=sorted_indices)
 
     # read and stor log var file if it does not exist
-    if not os.path.exists(log_lampedusa_path):
-        read_and_store_log_vars(ds_sorted)
+    if not os.path.exists(log_path):
+        read_and_store_log_vars(ds_sorted, log_path)
 
     # identify all time and range indexes where Zg is not Nan.
     time_range_indices = np.where(~np.isnan(ds_sorted['Zg'].values))
@@ -68,9 +67,7 @@ def read_cloud_radar_data(file_path, resampling=False):
     return ds_sorted, time_range_indices
 
 
-def read_and_store_log_vars(ds):
-    log_path = log_lampedusa_path
-
+def read_and_store_log_vars(ds, log_path):
     with open(log_path, "w") as f:
         print("Dataset attributes:", file=f)
         for key, value in ds.attrs.items():

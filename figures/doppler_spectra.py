@@ -10,7 +10,7 @@ import os
 import matplotlib.colors as mcolors
 
 
-def plot_single_sample(spec, doppler, save_path=None):
+def plot_single_sample(spec, doppler, doppler_range, save_path=None):
     """
     Plots the doppler spectra for a given time stamp and range gate from a cloud radar file.
 
@@ -34,7 +34,7 @@ def plot_single_sample(spec, doppler, save_path=None):
     max_spec = np.nanmax(spec)
     ax.set_ylim(0, max_spec*1.1)
     #ax.set_xlim(doppler.min(), doppler.max())
-    ax.set_xlim(-4, 4)
+    ax.set_xlim(doppler_range)
     # make axis and labels invisible
     ax.axis('off')
 

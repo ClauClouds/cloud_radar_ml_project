@@ -18,4 +18,4 @@ outputs/
 .env
 .idea/
 .vscode/settings.json
-readers/config.py
+readers/s3_credentials.py

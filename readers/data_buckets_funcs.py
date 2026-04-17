@@ -3,7 +3,7 @@ import boto3
 import os
 import logging
 from botocore.exceptions import ClientError
-from readers.config import *
+from readers.s3_credentials import *
 import pdb
 
 def list_files_bucket(s3, bucket_name):
@@ -108,7 +108,7 @@ def upload_to_bucket(path_out, filename_ncdf, bucket_name):
     import time
     from glob import glob
 
-    from readers.config import S3_ACCESS_KEY, S3_SECRET_ACCESS_KEY, S3_ENDPOINT_URL
+    from readers.s3_credentials import S3_ACCESS_KEY, S3_SECRET_ACCESS_KEY, S3_ENDPOINT_URL
     from readers.data_buckets_funcs import Initialize_s3_client, upload_file
 
 

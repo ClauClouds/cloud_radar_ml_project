@@ -1,7 +1,7 @@
 
 import os
 import pdb
-
+import xarray as xr
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -54,7 +54,7 @@ def extract_day_hour(time_stamp):
 
 
 
-def construct_sample_string(time_stamp, range_gate, cr_savefig_path, date=None):
+def construct_sample_string(time_stamp, range_gate, cr_savefig_path, site, date=None):
     """
     costructs a string to save the plot of the doppler spectra for
       a given time stamp and range gate from a cloud radar file.
@@ -62,6 +62,7 @@ def construct_sample_string(time_stamp, range_gate, cr_savefig_path, date=None):
     time_stamp (str): Time stamp in the format "yyyy-mm-dd hh:mm:ss".
     range_gate (float): Range gate value in meters.
     cr_savefig_path (str): Path to save the plot.
+    site (str): The site name, used for the file name and title of the plot.
     date (str, optional): Date string in the format "yyyymmdd". If None,
       the date will be extracted from the time stamp.
     Returns:
@@ -69,7 +70,6 @@ def construct_sample_string(time_stamp, range_gate, cr_savefig_path, date=None):
       spectra for the given time stamp and range gate.
 
     """
-    print(time_stamp, range_gate)
     range_string = int(range_gate)
 
     # extract day and hour from time stamp
@@ -79,6 +79,36 @@ def construct_sample_string(time_stamp, range_gate, cr_savefig_path, date=None):
     time_string = yy+mm+dd+'_'+hh+MM+ss
 
     # build string 
-    str_sample = f"{time_string}_range_{range_string}"
+    str_sample = f"{time_string}_range_{range_string}_{site}"
     save_path = os.path.join(cr_savefig_path, "samples", f"{str_sample}.png")
     return save_path
+
+
+
+def store_data_ncdf(spec_data, spec_data_norm, times, ranges, ds, site, date, hh, cr_savefig_path):
+    """Store the extracted doppler spectra data in a netcdf file for further use.
+    Parameters:
+    spec_data (numpy array): The extracted doppler spectra data.
+    spec_data_norm (numpy array): The normalized doppler spectra data.
+    times (numpy array): The time values corresponding to the doppler spectra data.
+    ranges (numpy array): The range values corresponding to the doppler spectra data.   
+    ds (xarray.Dataset): The original cloud radar dataset, used to get the doppler values for the coordinates of the new dataset.
+    site (str): The site name, used for the file name and title of the plot.
+    date (str): The date string, used for the file name and title of the plot.
+    hh (str): The hour string, used for the file name and title of the plot.
+    
+    """
+
+    ds_spec = xr.Dataset(
+        data_vars={
+            "spec_data": (("times", "doppler"), spec_data),
+            "spec_data_norm": (("times", "doppler"), spec_data_norm),
+        },
+        coords={
+            "times": times,
+            "doppler": ds['doppler'].values,
+            "ranges": ranges
+        }
+    )   
+    ds_spec.to_netcdf(os.path.join(cr_savefig_path, site+"_"+date+"_"+hh+".nc"))
+    return os.path.join(cr_savefig_path, site+"_"+date+"_"+hh+".nc")
